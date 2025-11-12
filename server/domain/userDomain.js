@@ -68,6 +68,25 @@ userDomain = {
         query += 'from (SELECT id, points from users) t';
         return query;
     },
+
+    getTopUsers(limit = 100) {
+        return new Promise((resolve, reject) => {
+            const query = `
+                SELECT username, name, points, url
+                FROM users 
+                WHERE points > 0
+                ORDER BY points DESC, created_at ASC 
+                LIMIT $1
+            `;
+            db.execWithParams(query, [limit])
+            .then((result) => {
+                resolve(result.rows);
+            })
+            .catch((err) => {
+                reject(err);
+            });
+        });
+    },
 }
 
 module.exports = userDomain;

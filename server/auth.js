@@ -76,18 +76,53 @@ let auth = {
     },
     loginCallback(req, res) {
         return new Promise(function (resolve, reject) {
+            console.log('=== LOGIN CALLBACK START ===');
+            console.log('Query params:', req.query);
+            console.log('Body params:', req.body);
+            
             var conn = new jsforce.Connection({ oauth2 : oauth2 });
             var code = req.param('code');
+            var error = req.param('error');
+            var errorDescription = req.param('error_description');
             var path = req.param('state');
+            
+            console.log('Authorization code:', code);
+            console.log('Error:', error);
+            console.log('Error description:', errorDescription);
+            console.log('State (redirect path):', path);
+            
+            if (error) {
+                console.log('OAuth error received:', error, errorDescription);
+                reject({ error: error, description: errorDescription });
+                return;
+            }
+            
+            if (!code) {
+                console.log('No authorization code received');
+                reject({ error: 'no_code', description: 'Authorization code missing' });
+                return;
+            }
+            
             if (path !== null && path !== undefined) {
                 path = decodeURIComponent(path);
             }
+            
+            console.log('Attempting to authorize with code...');
             conn.authorize(code)
             .then(function(userInfo) {
+                console.log('Authorization successful!');
+                console.log('User Info from authorize:', userInfo);
+                console.log('Access Token received:', conn.accessToken ? 'YES' : 'NO');
+                console.log('Instance URL:', conn.instanceUrl);
+                
                 conn.identity(function (err, idResponse) {
-                    if (err) { throw err; }
+                    if (err) { 
+                        console.log('Error getting identity:', err);
+                        throw err; 
+                    }
                     console.log("User Name: " + idResponse.display_name);
                     console.log("User Email: " + idResponse.email);
+                    console.log("Username: " + idResponse.username);
                     userDomain.createOrGetUserRecord(idResponse.username, idResponse.email)
                     .then((userRecord) => {
                         console.log("User's database ID: " + userRecord.id);
@@ -116,6 +151,10 @@ let auth = {
                 });
             })
             .catch(function (err) {
+                console.log('=== AUTHORIZATION ERROR ===');
+                console.log('Error type:', err.name);
+                console.log('Error message:', err.message);
+                console.log('Full error:', JSON.stringify(err, null, 2));
                 reject(err);
             })
         });

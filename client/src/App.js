@@ -7,6 +7,7 @@ import ProblemList from './components/ProblemList';
 import Navigation from './components/Navigation';
 import HomePage from './components/HomePage';
 import Team from './components/Team';
+import Leaderboard from './components/Leaderboard';
 import LoginButton from './components/LoginButton';
 import { UserProvider } from './components/UserContext';
 
@@ -105,6 +106,8 @@ class App extends Component {
               <Route path="/" element={<HomePage />}>
               </Route>
               <Route path="/the-team" element={<Team />}>
+              </Route>
+              <Route path="/leaderboard" element={<Leaderboard />}>
               </Route>
               <Route path="/problem/create" element={<ProblemUpsert onlogout={this.setInfo} />}>
               </Route>

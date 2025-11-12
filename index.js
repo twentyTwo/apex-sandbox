@@ -6,6 +6,7 @@ const auth = require('./server/auth');
 const db = require('./server/db');
 const problemDomain = require('./server/domain/problemDomain');
 const problemAttemptsDomain = require('./server/domain/problemAttemptsDomain');
+const userDomain = require('./server/domain/userDomain');
 const problemRunner = require('./server/problemRunner');
 //const { json } = require('express');
 
@@ -82,6 +83,18 @@ else {
         problemDomain.getLatestProblems()
         .then((latestProblems) => {
             res.json(latestProblems);
+        });
+    });
+
+    app.get('/api/leaderboard', function (req, res) {
+        const limit = req.query.limit ? parseInt(req.query.limit) : 100;
+        userDomain.getTopUsers(limit)
+        .then((topUsers) => {
+            res.json(topUsers);
+        })
+        .catch((err) => {
+            console.log('Error fetching leaderboard:', err);
+            res.status(500).json({error: 'Failed to fetch leaderboard'});
         });
     });
 
@@ -220,17 +233,25 @@ else {
     });
     
     app.get('/api/loginurl/:redir', function (req, res) {
-        res.json({url: auth.getLoginUrl(req.params.redir)});
+        const loginUrl = auth.getLoginUrl(req.params.redir);
+        console.log('=== LOGIN URL REQUESTED ===');
+        console.log('Redirect path:', req.params.redir);
+        console.log('Generated URL:', loginUrl);
+        res.json({url: loginUrl});
     });
 
     app.get('/logincallback', function (req, res) {
-        //set access token and stuff in memory and return
-        //res.json({text: 'Logged in successfully!'});
+        console.log('=== CALLBACK ENDPOINT HIT ===');
+        console.log('Full URL:', req.url);
+        console.log('Query:', req.query);
+        
         auth.loginCallback(req, res)
         .then((redirectPath) => {
+            console.log('Login successful! Redirecting to:', SITE_BASEURL + redirectPath);
             res.redirect(SITE_BASEURL + redirectPath);
         })
         .catch((err) => {
+            console.log('Login callback error:', err);
             res.json({message: 'Error!', error: err});
         });
     });
